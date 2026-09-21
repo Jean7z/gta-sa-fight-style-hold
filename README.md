@@ -102,9 +102,9 @@ I FightStyle: Style combo active: attack command 11 -> 12 (style=5)
 
 The first line after the load banner is logged once, the first time the mod
 rewrites a command — fighting unarmed with a style learned — so you can confirm
-the hook fires without flooding the log on every punch. On a 2.00 (armv7) game the bracketed variant reads
-`[2.00 armeabi-v7a]`, and a `style=4` rewrite never happens — that is the "no
-style learned" case.
+the hook fires without flooding the log on every punch. On a 2.00 (armv7) game
+the bracketed variant reads `[2.00 armeabi-v7a]`, and a `style=4` rewrite never
+happens — that is the "no style learned" case.
 
 ## Building from source
 
