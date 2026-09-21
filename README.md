@@ -70,7 +70,13 @@ command in one narrow case:
 
 1. the ped is the player,
 2. the player has a style learned (`m_nFightingStyle != STYLE_DEFAULT`),
-3. the command is one of the four attack commands (`0xB`–`0xE`).
+3. the command is one of the four attack commands (`0xB`–`0xE`),
+4. the hand is empty — `m_Weapons[m_nActiveWeaponSlot].m_eWeaponType == WEAPON_UNARMED`.
+
+The last condition is the fix: the engine's own `0xC` path returns the learned
+style no matter what's in hand, so without the gate a knife, bat or crowbar
+would replay the gym combos too. Gating on `WEAPON_UNARMED` keeps armed melee
+on its native weapon fight level and reserves the style for bare fists.
 
 It then hands the engine command `0xC`. Everything else about the attack is the
 engine's own style path, untouched: animation block refcounting, the chain
@@ -95,8 +101,8 @@ I FightStyle: Style combo active: attack command 11 -> 12 (style=5)
 ```
 
 The first line after the load banner is logged once, the first time the mod
-rewrites a command, so you can confirm the hook fires without flooding the log
-on every punch. On a 2.00 (armv7) game the bracketed variant reads
+rewrites a command — fighting unarmed with a style learned — so you can confirm
+the hook fires without flooding the log on every punch. On a 2.00 (armv7) game the bracketed variant reads
 `[2.00 armeabi-v7a]`, and a `style=4` rewrite never happens — that is the "no
 style learned" case.
 
@@ -130,20 +136,33 @@ the instruction that uses it in the shipped `libGTASA.so`:
 | Attack command, style path | `0xC` | `0xC` | `GetAvailableComboSet` |
 | Attack command, default path | `0xB` | `0xB` | `GetAvailableComboSet` |
 | `STYLE_DEFAULT` (no style) | `4` | `4` | `GetAvailableComboSet` |
+| `CPed::m_nActiveWeaponSlot` | `+0x8DC` | `+0x71C` | `GetAvailableComboSet` |
+| `CPed::m_Weapons` (array base) | `+0x730` | `+0x5A4` | `GetAvailableComboSet` |
+| `m_Weapons` slot stride | `0x20` | `0x1C` | `GetAvailableComboSet` |
+| `WEAPON_UNARMED` | `0` | `0` | `GetAvailableComboSet` |
 
 Evidence, for anyone re-deriving these on another build:
 
 ```text
 2.10 arm64  GetAvailableComboSet @0x5DA664   ldrb   w20, [x22, #0x8FD]   ; command 0xC
+2.10 arm64  GetAvailableComboSet @0x5DA664   ldrsb  x8,  [x22, #0x8DC]   ; active weapon slot
+2.10 arm64  GetAvailableComboSet @0x5DA664   ldr    w0,  [x8,  #0x730]   ; m_Weapons[slot].m_eWeaponType
 2.00 armv7  GetAvailableComboSet @0x4D90F8   ldrb.w r9,  [r6,  #0x735]   ; command 0xC
+2.00 armv7  GetAvailableComboSet @0x4D90F8   ldrsb.w r0, [r6,  #0x71C]   ; active weapon slot
+2.00 armv7  GetAvailableComboSet @0x4D90F8   ldr.w  r0,  [r0,  #0x5A4]   ; m_Weapons[slot].m_eWeaponType
 ```
 
 Both versions take the identical branch: command `0xC` returns the fighting
 style, any other attack command returns the weapon fight level and falls back to
-`4` when that level is `4`.
+`4` when that level is `4`. The weapon in hand is resolved the same way on both
+ABIs — `ldrsb` the active slot, index `m_Weapons` by it, read `m_eWeaponType` —
+mirroring the classic PC pattern
+`CWeaponInfo::GetWeaponInfo(ped->m_Weapons[ped->m_nActiveWeaponSlot].m_eWeaponType)`.
 
 ## Notes and limitations
 
+- **Fists only.** A knife, bat or crowbar keeps its native weapon fight level;
+  the gym style is applied only while unarmed (`WEAPON_UNARMED`).
 - **Player only.** NPCs keep the vanilla behaviour, so a learned style is never
   imposed on enemies.
 - **The 2.00 (armv7) build is verified statically**, not run-tested: its offset
