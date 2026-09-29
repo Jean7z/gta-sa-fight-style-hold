@@ -8,10 +8,11 @@ melee style you learned at the gym actually drive your punches, instead of the
 generic unarmed combo. Supports **2.10 (arm64)** and **2.00 (armv7)**.
 
 In vanilla, attacking with bare fists always resolves to the default unarmed
-combo. The combo set of the style you unlocked — Boxing, Karate or Kung Fu — is
+combo. The combo set of the style you unlocked (Boxing, Karate, or Kung Fu) is
 only reachable through a different attack command that the game never issues
 for fists, so learning a style changes nothing about how you punch. This mod
-rewrites that single command. No keys, no config file, no HUD changes.
+rewrites that single command. There is nothing to configure and nothing in the
+HUD changes.
 
 ## Table of contents
 
@@ -43,10 +44,10 @@ already has one) and attack with bare fists.
 
 > [!NOTE]
 > Requires a game build with Android Mod Loader installed. There is no config
-> file: the mod has nothing to configure and stays out of the way until you
-> actually have a style. The game version is detected from the process ABI —
-> the 2.10 APK ships arm64-only and the 2.00 APK ships armv7-only, so each
-> build carries its own verified offset (see [Verified offsets](#verified-offsets)).
+> file: the mod has nothing to configure, and it does nothing until you have a
+> style. The game version is detected from the process ABI: the 2.10 APK ships
+> arm64-only and the 2.00 APK ships armv7-only, so each build carries its own
+> verified offset (see [Verified offsets](#verified-offsets)).
 
 ## How it works
 
